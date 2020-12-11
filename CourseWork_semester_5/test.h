@@ -6,12 +6,17 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <ctime>
+#include <chrono>
+
 #include "backed_up_set.h"
 
 
 
 
 double getCPUTime();
+
+double getAllocatedMemorySize(double k);
 
 void PrintMemoryInfo(int k, const char* suffix);
 
@@ -20,8 +25,6 @@ void memory_usage_statistic(int delta, int tests_count, bool csv);
 void complex_time_test(int delta, int tests_count, bool csv);
 
 void recovery_time_test(int delta, int tests_count, bool csv);
-
-void memory_test();
 
 #ifdef _DEBUG
 

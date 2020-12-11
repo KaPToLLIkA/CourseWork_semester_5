@@ -99,6 +99,30 @@ double getCPUTime()
     return -1;      /* Failed. */
 }
 
+double getAllocatedMemorySize(double k)
+{
+    DWORD processID = GetCurrentProcessId();
+    HANDLE hProcess;
+    PROCESS_MEMORY_COUNTERS pmc;
+    APP_MEMORY_INFORMATION ami;
+
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
+        PROCESS_VM_READ,
+        FALSE, processID);
+    if (NULL == hProcess)
+        return -1;
+
+
+
+    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)))
+    {
+        return pmc.WorkingSetSize / k;
+    }
+
+    CloseHandle(hProcess);
+    return -1;
+}
+
 void PrintMemoryInfo(int k, const char* suffix)
 {
     DWORD processID = GetCurrentProcessId();
@@ -134,9 +158,25 @@ void PrintMemoryInfo(int k, const char* suffix)
     CloseHandle(hProcess);
 }
 
+
 void memory_usage_statistic(int delta, int tests_count, bool csv)
 {
-    
+    std::ofstream fmy;
+    std::ofstream fstd;
+    if (csv) {
+        fmy.open("tests\\memory_usage_statistic_my_set.csv", std::ios_base::app);
+        fstd.open("tests\\memory_usage_statistic_std_set.csv", std::ios_base::app);
+
+        auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        fmy << "MEMORY," << std::ctime(&time) << ",\n";
+        fstd << "MEMORY," << std::ctime(&time) << ",\n";
+    }
+
+    if (csv) {
+        fmy << "ITEMS,TIME,\n";
+        fstd << "ITEMS,TIME,\n";
+    }
+
     for (int i = 1; i <= tests_count; ++i) {
         backed_up_set<int> my_set;
 
@@ -145,16 +185,11 @@ void memory_usage_statistic(int delta, int tests_count, bool csv)
         for (int ii = 0; ii < delta * i; ++ii) {
             my_set.insert(ii);
         }
-        std::cout << "INSERT MY SET\t\t" << delta * (i) << " ITEMS ";
-        PrintMemoryInfo(1024 * 1024, " MB");
-
+        double memoryMB = getAllocatedMemorySize(1024 * 1024);
+        std::cout << "INSERT MY SET\t\t" << delta * (i) 
+            << " ITEMS, MEMORY: " << memoryMB << "\n";
         
-        for (int ii = 0; ii < delta * i; ++ii) {
-            my_set.remove(ii);
-        }
-        std::cout << "REMOVE MY SET\t\t" << delta * (i) << " ITEMS ";
-        PrintMemoryInfo(1024 * 1024, " MB");
-
+        if (csv) fmy << delta * i << "," << memoryMB << ",\n";
 
     }
 
@@ -166,15 +201,16 @@ void memory_usage_statistic(int delta, int tests_count, bool csv)
         for (int ii = 0; ii < delta * i; ++ii) {
             set.insert(ii);
         }
-        std::cout << "INSERT STD SET\t\t" << delta * (i) << " ITEMS ";
-        PrintMemoryInfo(1024 * 1024, " MB");
+        double memoryMB = getAllocatedMemorySize(1024 * 1024);
+        std::cout << "INSERT STD SET\t\t" << delta * (i)
+            << " ITEMS, MEMORY: " << memoryMB << "\n";
+        
+        if (csv) fstd << delta * i << "," << memoryMB << ",\n";
+    }
 
-
-        for (int ii = 0; ii < delta * i; ++ii) {
-            set.erase(ii);
-        }
-        std::cout << "REMOVE STD SET\t\t" << delta * (i) << " ITEMS ";
-        PrintMemoryInfo(1024 * 1024, " MB");
+    if (csv) {
+        fmy.close();
+        fstd.close();
     }
 
 }
@@ -185,10 +221,20 @@ void complex_time_test(int delta, int tests_count, bool csv)
     std::ofstream fi;
     std::ofstream fr;
     if (csv) {
-        fi.open("complex_time_test_i.csv", std::ios_base::app);
-        fr.open("complex_time_test_r.csv", std::ios_base::app);
+        fi.open("tests\\complex_time_test_insert.csv", std::ios_base::app);
+        fr.open("tests\\complex_time_test_remove.csv", std::ios_base::app);
+
+        auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        fi << "INSERT," << std::ctime(&time) << ",\n";
+        fr << "REMOVE," << std::ctime(&time) << ",\n";
     }
 
+    if (csv) {
+        fi << "MY_SET,\n";
+        fi << "ITEMS,TIME,\n";
+        fr << "MY_SET,\n";
+        fr << "ITEMS,TIME,\n";
+    }
     for (int i = 1; i <= tests_count; ++i) {
         backed_up_set<int> my_set;
 
@@ -213,7 +259,12 @@ void complex_time_test(int delta, int tests_count, bool csv)
         if (csv) fr << delta * i << "," << end - start << ",\n";
     }
 
-
+    if (csv) {
+        fi << "STD_SET,\n";
+        fi << "ITEMS,TIME,\n";
+        fr << "STD_SET,\n";
+        fr << "ITEMS,TIME,\n";
+    }
     for (int i = 1; i <= tests_count; ++i) {
         
 
@@ -249,10 +300,18 @@ void recovery_time_test(int delta, int tests_count, bool csv)
     std::ofstream fn;
     std::ofstream fy;
     if (csv) {
-        fn.open("recovery_time_test_no_remove.csv", std::ios_base::app);
-        fy.open("recovery_time_test_yes_remove.csv", std::ios_base::app);
+        fn.open("tests\\recovery_time_test_without_remove.csv", std::ios_base::app);
+        fy.open("tests\\recovery_time_test_with_remove.csv", std::ios_base::app);
+    
+        auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        fn << "WITHOUT_REMOVE_UNUSED," << std::ctime(&time) << ",\n";
+        fy << "WITH_REMOVE_UNUSED," << std::ctime(&time) << ",\n";
     }
 
+    if (csv) {
+        fn << "ITEMS,TIME,\n";
+        fy << "ITEMS,TIME,\n";
+    }
     for (int i = 1; i <= tests_count; ++i) {
         {
             backed_up_set<int> my_set;
@@ -292,18 +351,6 @@ void recovery_time_test(int delta, int tests_count, bool csv)
         fn.close();
         fy.close();
     }
-}
-
-void memory_test()
-{
-    backed_up_set<int> set;
-
-    for (int i = 0; i < 1000 * 1000; ++i) {
-        set.insert(i);
-    }
-
-    int x;
-    std::cin >> x;
 }
 
 

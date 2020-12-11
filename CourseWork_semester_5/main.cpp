@@ -7,16 +7,21 @@
 
 uint32_t get_uint32t_from_stdin();
 
-int main() {
-	//recovery_time_test(10000 * 1000, 1);
-	recovery_time_test(100 * 1000, 9, true);
-	recovery_time_test(1000 * 1000, 10, true);
+#define ENABLE_PERFORMANCE_TESTS
 
-	//memory_usage_statistic(100*1000, 9);
-	//memory_usage_statistic(1000*1000, 10);
-	//memory_test();
-	complex_time_test(100*1000, 9, true);
-	complex_time_test(1000*1000, 10, true);
+int main() {
+#ifdef ENABLE_PERFORMANCE_TESTS
+	recovery_time_test(100 * 1000, 9, true);
+	//recovery_time_test(1000 * 1000, 10, true);
+
+	memory_usage_statistic(100*1000, 9, true);
+	//memory_usage_statistic(1000*1000, 10, false);
+	
+	complex_time_test(100 * 1000, 9, true);
+	//complex_time_test(1000 * 1000, 10, true);
+#endif // ENABLE_PERFORMANCE_TESTS
+
+	
 #ifdef _DEBUG
 	//print_test();
 	remove_test();
