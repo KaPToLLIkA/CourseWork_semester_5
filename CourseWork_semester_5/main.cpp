@@ -14,7 +14,7 @@ int main() {
 	recovery_time_test(100 * 1000, 9, true);
 	//recovery_time_test(1000 * 1000, 10, true);
 
-	memory_usage_statistic(100*1000, 9, true);
+	memory_usage_statistic(100 * 1000, 9, true);
 	//memory_usage_statistic(1000*1000, 10, false);
 	
 	complex_time_test(100 * 1000, 9, true);
@@ -23,7 +23,7 @@ int main() {
 
 	
 #ifdef _DEBUG
-	//print_test();
+	print_test();
 	remove_test();
 	rand_insert_test();
 #endif // _DEBUG
