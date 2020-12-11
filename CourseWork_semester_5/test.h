@@ -1,4 +1,7 @@
 #pragma once
+#include <windows.h>
+#include <stdio.h>
+#include <psapi.h>
 #include <set>
 #include <string>
 #include <iostream>
@@ -10,9 +13,17 @@
 
 double getCPUTime();
 
-#ifdef _DEBUG
+void PrintMemoryInfo(int k, const char* suffix);
 
-void complex_time_test();
+void memory_usage_statistic(int delta, int tests_count, bool csv);
+
+void complex_time_test(int delta, int tests_count, bool csv);
+
+void recovery_time_test(int delta, int tests_count, bool csv);
+
+void memory_test();
+
+#ifdef _DEBUG
 
 void print_test();
 

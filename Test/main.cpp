@@ -163,18 +163,15 @@ int main() {
 	std::vector<int> nums;
 	node* root = nullptr;
 
-	for (int i = 1; i < 37; ++i) {
-		nums.push_back(i);
+	for (int i = 0; i < 1000*1000; ++i) {
+		root = insert(root, i);
 	}
 
-	for (int i = 1; i < 37; ++i) {
-		int idx = rand() % nums.size();
-		root = insert(root, nums[idx]);
-		nums.erase(nums.begin() + idx);
-	}
+	//std::vector<bool> levels;
+	//rec_print(std::cout, root, levels, 0, 3, '-', '|', '+');
 
-	std::vector<bool> levels;
-	rec_print(std::cout, root, levels, 0, 3, '-', '|', '+');
+	int x;
+	std::cin >> x;
 
 	return 0;
 }

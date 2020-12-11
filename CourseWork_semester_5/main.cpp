@@ -8,8 +8,16 @@
 uint32_t get_uint32t_from_stdin();
 
 int main() {
+	//recovery_time_test(10000 * 1000, 1);
+	recovery_time_test(100 * 1000, 9, true);
+	recovery_time_test(1000 * 1000, 10, true);
+
+	//memory_usage_statistic(100*1000, 9);
+	//memory_usage_statistic(1000*1000, 10);
+	//memory_test();
+	complex_time_test(100*1000, 9, true);
+	complex_time_test(1000*1000, 10, true);
 #ifdef _DEBUG
-	//complex_time_test();
 	//print_test();
 	remove_test();
 	rand_insert_test();
@@ -100,6 +108,7 @@ int main() {
 
 uint32_t get_uint32t_from_stdin()
 {
+#undef max
 	while (true) {
 		uint32_t t;
 		std::cin >> t;

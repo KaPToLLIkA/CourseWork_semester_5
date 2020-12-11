@@ -99,13 +99,97 @@ double getCPUTime()
     return -1;      /* Failed. */
 }
 
-#ifdef _DEBUG
-
-
-void complex_time_test()
+void PrintMemoryInfo(int k, const char* suffix)
 {
-    int delta = 1000000;
-    for (int i = 0; i < 10; ++i) {
+    DWORD processID = GetCurrentProcessId();
+    HANDLE hProcess;
+    PROCESS_MEMORY_COUNTERS pmc;
+    APP_MEMORY_INFORMATION ami;
+
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
+        PROCESS_VM_READ,
+        FALSE, processID);
+    if (NULL == hProcess)
+        return;
+
+
+
+    if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)))
+    {
+
+        //std::cout << "Page fault count: \t\t" << pmc.PageFaultCount << " \n";
+        std::cout << "Working set size: \t\t" << pmc.WorkingSetSize / k << suffix << "\n";
+    }
+
+
+    if (GetProcessInformation(
+        hProcess,
+        PROCESS_INFORMATION_CLASS::ProcessAppMemoryInfo,
+        &ami,
+        sizeof(ami)
+    )) {
+        //std::cout << "Total commit usage: \t\t" << ami.TotalCommitUsage / k << suffix << "\n";
+    }
+
+    CloseHandle(hProcess);
+}
+
+void memory_usage_statistic(int delta, int tests_count, bool csv)
+{
+    
+    for (int i = 1; i <= tests_count; ++i) {
+        backed_up_set<int> my_set;
+
+
+       
+        for (int ii = 0; ii < delta * i; ++ii) {
+            my_set.insert(ii);
+        }
+        std::cout << "INSERT MY SET\t\t" << delta * (i) << " ITEMS ";
+        PrintMemoryInfo(1024 * 1024, " MB");
+
+        
+        for (int ii = 0; ii < delta * i; ++ii) {
+            my_set.remove(ii);
+        }
+        std::cout << "REMOVE MY SET\t\t" << delta * (i) << " ITEMS ";
+        PrintMemoryInfo(1024 * 1024, " MB");
+
+
+    }
+
+    for (int i = 1; i <= tests_count; ++i) {
+       
+
+        std::set<int> set;
+
+        for (int ii = 0; ii < delta * i; ++ii) {
+            set.insert(ii);
+        }
+        std::cout << "INSERT STD SET\t\t" << delta * (i) << " ITEMS ";
+        PrintMemoryInfo(1024 * 1024, " MB");
+
+
+        for (int ii = 0; ii < delta * i; ++ii) {
+            set.erase(ii);
+        }
+        std::cout << "REMOVE STD SET\t\t" << delta * (i) << " ITEMS ";
+        PrintMemoryInfo(1024 * 1024, " MB");
+    }
+
+}
+
+
+void complex_time_test(int delta, int tests_count, bool csv)
+{
+    std::ofstream fi;
+    std::ofstream fr;
+    if (csv) {
+        fi.open("complex_time_test_i.csv", std::ios_base::app);
+        fr.open("complex_time_test_r.csv", std::ios_base::app);
+    }
+
+    for (int i = 1; i <= tests_count; ++i) {
         backed_up_set<int> my_set;
 
 
@@ -113,37 +197,117 @@ void complex_time_test()
         for (int ii = 0; ii < delta * i; ++ii) {
             my_set.insert(ii);
         }
-        std::cout << "INSERT MY SET\t\t" << delta * (i + 1) << " ITEMS:\t\t"
-             << getCPUTime() - start << "s\n";
+        double end = getCPUTime();
+        std::cout << "INSERT MY SET\t\t" << delta * (i) << " ITEMS:\t\t"
+            << end - start << "s\n";
+        if (csv) fi << delta * i << "," << end - start << ",\n";
 
 
         start = getCPUTime();
         for (int ii = 0; ii < delta * i; ++ii) {
             my_set.remove(ii);
         }
-        std::cout << "REMOVE MY SET\t\t" << delta * (i + 1) << " ITEMS:\t\t"
-            << getCPUTime() - start << "s\n";
+        end = getCPUTime();
+        std::cout << "REMOVE MY SET\t\t" << delta * (i) << " ITEMS:\t\t"
+            << end - start << "s\n";
+        if (csv) fr << delta * i << "," << end - start << ",\n";
+    }
 
 
+    for (int i = 1; i <= tests_count; ++i) {
+        
 
         std::set<int> set;
-        start = getCPUTime();
+        double start = getCPUTime();
         for (int ii = 0; ii < delta * i; ++ii) {
             set.insert(ii);
         }
-        std::cout << "INSERT STD SET\t\t" << delta * (i + 1) << " ITEMS:\t\t"
-            << getCPUTime() - start << "s\n";
+        double end = getCPUTime();
+        std::cout << "INSERT STD SET\t\t" << delta * (i) << " ITEMS:\t\t"
+            << end - start << "s\n";
+        if (csv) fi << delta * i << "," << end - start << ",\n";
 
 
         start = getCPUTime();
         for (int ii = 0; ii < delta * i; ++ii) {
             set.erase(ii);
         }
-        std::cout << "REMOVE STD SET\t\t" << delta * (i + 1) << " ITEMS:\t\t"
-            << getCPUTime() - start << "s\n";
+        end = getCPUTime();
+        std::cout << "REMOVE STD SET\t\t" << delta * (i) << " ITEMS:\t\t"
+            << end - start << "s\n";
+        if (csv) fr << delta * i << "," << end - start << ",\n";
+    }
+
+    if (csv) {
+        fi.close();
+        fr.close();
     }
 }
 
+void recovery_time_test(int delta, int tests_count, bool csv)
+{
+    std::ofstream fn;
+    std::ofstream fy;
+    if (csv) {
+        fn.open("recovery_time_test_no_remove.csv", std::ios_base::app);
+        fy.open("recovery_time_test_yes_remove.csv", std::ios_base::app);
+    }
+
+    for (int i = 1; i <= tests_count; ++i) {
+        {
+            backed_up_set<int> my_set;
+
+            my_set.insert(0);
+            my_set.save_backup();
+            for (int ii = 1; ii < delta * i; ++ii) {
+                my_set.insert(ii);
+            }
+            double start = getCPUTime();
+            my_set.go_to_backup(0);
+            double end = getCPUTime();
+            std::cout << "RECOVERY NO REMOVE\t\t" << delta * (i) << " ITEMS:\t\t"
+                << end - start << "s\n";
+            if (csv) fn << delta * i << "," << end - start << ",\n";
+        }
+        
+        {
+            backed_up_set<int> my_set;
+
+            my_set.insert(0);
+            my_set.save_backup();
+            for (int ii = 1; ii < delta * i; ++ii) {
+                my_set.insert(ii);
+            }
+            double start = getCPUTime();
+            my_set.go_to_backup(0, true);
+            double end = getCPUTime();
+            std::cout << "RECOVERY REMOVE\t\t\t" << delta * (i) << " ITEMS:\t\t"
+                << end - start << "s\n";
+            if (csv) fy << delta * i << "," << end - start << ",\n";
+
+        }
+    }
+
+    if (csv) {
+        fn.close();
+        fy.close();
+    }
+}
+
+void memory_test()
+{
+    backed_up_set<int> set;
+
+    for (int i = 0; i < 1000 * 1000; ++i) {
+        set.insert(i);
+    }
+
+    int x;
+    std::cin >> x;
+}
+
+
+#ifdef _DEBUG
 void print_test()
 {
     backed_up_set<int> set;

@@ -366,6 +366,9 @@ inline void backed_up_set<T>::go_to_backup(uint32_t version, bool remove_deleted
 	if (version >= this->generation) {
 		return;
 	}
+
+	this->generation = version;
+
 	root = rec_recovery(root, version, remove_deleted);
 }
 
